@@ -11,7 +11,10 @@ pub enum MatrixError {
     /// Matrix is singular and cannot be inverted
     NotInvertible,
     /// Matrix dimensions do not match for the operation
-    DimensionMismatch { expected: (usize, usize), got: (usize, usize) },
+    DimensionMismatch {
+        expected: (usize, usize),
+        got: (usize, usize),
+    },
     /// Operation requires a vector (single column) matrix
     NotAVector { cols: usize },
     /// Division by zero or near-zero value encountered
@@ -38,7 +41,10 @@ impl fmt::Display for MatrixError {
                 write!(f, "Expected a vector (1 column), got {} columns", cols)
             }
             Self::NumericalInstability => {
-                write!(f, "Numerical instability: division by zero or near-zero value")
+                write!(
+                    f,
+                    "Numerical instability: division by zero or near-zero value"
+                )
             }
             Self::EmptyMatrix => write!(f, "Empty matrix provided"),
         }

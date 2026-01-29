@@ -441,7 +441,7 @@ impl<const R: usize, const C: usize> Matrix<R, C> {
 
         let n = R;
         let mut augmented = self.data.clone();
-        
+
         // Append identity matrix
         for i in 0..n {
             for j in 0..n {
@@ -827,7 +827,11 @@ impl<const R: usize, const C: usize> Matrix<R, C> {
 impl<const R: usize> Matrix<R, 1> {
     /// Computes the Euclidean (L2) norm of a vector.
     pub fn norm(&self) -> f32 {
-        self.data.iter().map(|row| row[0] * row[0]).sum::<f32>().sqrt()
+        self.data
+            .iter()
+            .map(|row| row[0] * row[0])
+            .sum::<f32>()
+            .sqrt()
     }
 
     /// Returns a normalized (unit) vector.
@@ -1020,7 +1024,13 @@ impl<const R: usize, const C: usize> Add for &Matrix<R, C> {
             .data
             .iter()
             .zip(rhs.data.iter())
-            .map(|(row_a, row_b)| row_a.iter().zip(row_b.iter()).map(|(&a, &b)| a + b).collect())
+            .map(|(row_a, row_b)| {
+                row_a
+                    .iter()
+                    .zip(row_b.iter())
+                    .map(|(&a, &b)| a + b)
+                    .collect()
+            })
             .collect();
         Ok(Matrix::<R, C>::from_vec(data))
     }
@@ -1034,7 +1044,13 @@ impl<const R: usize, const C: usize> Sub for &Matrix<R, C> {
             .data
             .iter()
             .zip(rhs.data.iter())
-            .map(|(row_a, row_b)| row_a.iter().zip(row_b.iter()).map(|(&a, &b)| a - b).collect())
+            .map(|(row_a, row_b)| {
+                row_a
+                    .iter()
+                    .zip(row_b.iter())
+                    .map(|(&a, &b)| a - b)
+                    .collect()
+            })
             .collect();
         Ok(Matrix::<R, C>::from_vec(data))
     }
@@ -1424,11 +1440,7 @@ mod tests {
     #[test]
     fn test_plu() {
         // Matrix with zero pivot that would fail regular LU
-        let m = Matrix::<3, 3>::new([
-            [0.0, 1.0, 2.0],
-            [1.0, 2.0, 3.0],
-            [2.0, 3.0, 5.0],
-        ]);
+        let m = Matrix::<3, 3>::new([[0.0, 1.0, 2.0], [1.0, 2.0, 3.0], [2.0, 3.0, 5.0]]);
         let (p, l, u) = m.plu().unwrap();
 
         // Verify P * A = L * U
@@ -1457,11 +1469,7 @@ mod tests {
     #[test]
     fn test_cholesky() {
         // Symmetric positive-definite matrix
-        let m = Matrix::<3, 3>::new([
-            [4.0, 2.0, 2.0],
-            [2.0, 5.0, 1.0],
-            [2.0, 1.0, 6.0],
-        ]);
+        let m = Matrix::<3, 3>::new([[4.0, 2.0, 2.0], [2.0, 5.0, 1.0], [2.0, 1.0, 6.0]]);
         let l = m.cholesky().unwrap();
 
         // Verify L * L^T = A
@@ -1478,19 +1486,150 @@ mod tests {
     #[test]
     fn test_cholesky_not_positive_definite() {
         // Not positive definite (negative eigenvalue)
-        let m = Matrix::<2, 2>::new([
-            [1.0, 2.0],
-            [2.0, 1.0],
-        ]);
+        let m = Matrix::<2, 2>::new([[1.0, 2.0], [2.0, 1.0]]);
         assert!(m.cholesky().is_err());
     }
 
     #[test]
     fn test_cholesky_not_symmetric() {
-        let m = Matrix::<2, 2>::new([
-            [1.0, 2.0],
-            [3.0, 4.0],
-        ]);
+        let m = Matrix::<2, 2>::new([[1.0, 2.0], [3.0, 4.0]]);
         assert!(m.cholesky().is_err());
+    }
+
+    // ========================================================================
+    // Edge Case Tests for v1.0.0
+    // ========================================================================
+
+    #[test]
+    fn test_large_matrix_identity() {
+        let m = Matrix::<10, 10>::identity();
+        assert_eq!(m.determinant().unwrap(), 1.0);
+        assert_eq!(m.rank(), 10);
+        assert!(m.is_symmetric());
+        assert!(m.is_orthogonal());
+    }
+
+    #[test]
+    fn test_solve_singular_system() {
+        // Singular matrix - no unique solution
+        let a = Matrix::<2, 2>::new([[1.0, 2.0], [2.0, 4.0]]);
+        let b = Matrix::<2, 1>::new([[1.0], [2.0]]);
+        assert!(a.solve(&b).is_err());
+    }
+
+    #[test]
+    fn test_inverse_times_original_is_identity() {
+        let m = Matrix::<3, 3>::new([[1.0, 2.0, 3.0], [0.0, 1.0, 4.0], [5.0, 6.0, 0.0]]);
+        let inv = m.inverse().unwrap();
+        let product = (&m * &inv).unwrap();
+
+        for i in 0..3 {
+            for j in 0..3 {
+                let expected = if i == j { 1.0 } else { 0.0 };
+                assert!((product[(i, j)] - expected).abs() < 1e-4);
+            }
+        }
+    }
+
+    #[test]
+    fn test_transpose_twice_is_original() {
+        let m = Matrix::<2, 3>::new([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+        let tt = m.transpose().transpose();
+        assert_eq!(m, tt);
+    }
+
+    #[test]
+    fn test_zero_matrix_properties() {
+        let z = Matrix::<3, 3>::zeros();
+        assert_eq!(z.determinant().unwrap(), 0.0);
+        assert_eq!(z.trace(), 0.0);
+        assert_eq!(z.rank(), 0);
+        assert!(z.is_symmetric());
+        assert!(z.is_projection()); // 0² = 0
+    }
+
+    #[test]
+    fn test_scalar_multiplication_properties() {
+        let m = Matrix::<2, 2>::new([[1.0, 2.0], [3.0, 4.0]]);
+        let scaled = m.scale(2.0);
+
+        // (kA)^T = k(A^T)
+        assert_eq!(scaled.transpose(), m.transpose().scale(2.0));
+
+        // det(kA) = k^n * det(A) for n×n matrix
+        let det_scaled = scaled.determinant().unwrap();
+        let det_original = m.determinant().unwrap();
+        assert!((det_scaled - 4.0 * det_original).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_matrix_addition_commutativity() {
+        let a = Matrix::<2, 2>::new([[1.0, 2.0], [3.0, 4.0]]);
+        let b = Matrix::<2, 2>::new([[5.0, 6.0], [7.0, 8.0]]);
+        assert_eq!((&a + &b).unwrap(), (&b + &a).unwrap());
+    }
+
+    #[test]
+    fn test_matrix_multiplication_associativity() {
+        let a = Matrix::<2, 2>::new([[1.0, 2.0], [3.0, 4.0]]);
+        let b = Matrix::<2, 2>::new([[5.0, 6.0], [7.0, 8.0]]);
+        let c = Matrix::<2, 2>::new([[9.0, 10.0], [11.0, 12.0]]);
+
+        let ab_c = (&(&a * &b).unwrap() * &c).unwrap();
+        let a_bc = (&a * &(&b * &c).unwrap()).unwrap();
+
+        for i in 0..2 {
+            for j in 0..2 {
+                assert!((ab_c[(i, j)] - a_bc[(i, j)]).abs() < 1e-4);
+            }
+        }
+    }
+
+    #[test]
+    fn test_frobenius_norm_properties() {
+        let m = Matrix::<2, 2>::new([[3.0, 4.0], [0.0, 0.0]]);
+        assert!((m.frobenius_norm() - 5.0).abs() < 1e-6);
+
+        // ||kA|| = |k| * ||A||
+        let scaled = m.scale(2.0);
+        assert!((scaled.frobenius_norm() - 10.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_pow_larger_exponent() {
+        let m = Matrix::<2, 2>::new([[1.0, 1.0], [0.0, 1.0]]);
+        let p5 = m.pow(5).unwrap();
+        // For upper triangular [[1,1],[0,1]]^n = [[1,n],[0,1]]
+        assert!((p5[(0, 1)] - 5.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_diagonal_matrix_properties() {
+        let d = Matrix::<3, 3>::diagonal(&[2.0, 3.0, 4.0]);
+        assert_eq!(d.determinant().unwrap(), 24.0); // 2*3*4
+        assert_eq!(d.trace(), 9.0); // 2+3+4
+        assert!(d.is_symmetric());
+    }
+
+    #[test]
+    fn test_indexing() {
+        let mut m = Matrix::<2, 2>::new([[1.0, 2.0], [3.0, 4.0]]);
+        assert_eq!(m[(0, 1)], 2.0);
+        m[(0, 1)] = 10.0;
+        assert_eq!(m[(0, 1)], 10.0);
+    }
+
+    #[test]
+    fn test_default_is_zeros() {
+        let m: Matrix<3, 3> = Matrix::default();
+        assert_eq!(m, Matrix::<3, 3>::zeros());
+    }
+
+    #[test]
+    fn test_from_vec_of_vecs() {
+        let v = vec![vec![1.0, 2.0], vec![3.0, 4.0]];
+        let m: Matrix<2, 2> = v.into();
+        assert_eq!(m[(0, 0)], 1.0);
+        assert_eq!(m[(1, 1)], 4.0);
     }
 }

@@ -1,11 +1,11 @@
 use super::errors::{MatrixError, MatrixResult, EPSILON};
 
 /// Multiplies two matrices represented as `Vec<Vec<f32>>`
-/// 
+///
 /// # Arguments
 /// * `a` - Left matrix (rows_a × cols_a)
 /// * `b` - Right matrix (rows_b × cols_b)
-/// 
+///
 /// # Returns
 /// * `Ok(Vec<Vec<f32>>)` - Result matrix (rows_a × cols_b)
 /// * `Err(MatrixError::DimensionMismatch)` - If cols_a != rows_b
@@ -14,7 +14,7 @@ pub fn mult(a: &Vec<Vec<f32>>, b: &Vec<Vec<f32>>) -> MatrixResult<Vec<Vec<f32>>>
     if a.is_empty() || b.is_empty() {
         return Err(MatrixError::EmptyMatrix);
     }
-    
+
     let rows_a = a.len();
     let cols_a = a[0].len();
     let rows_b = b.len();

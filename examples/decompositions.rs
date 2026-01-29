@@ -5,11 +5,7 @@ use axb::Matrix;
 fn main() {
     println!("=== Matrix Decompositions ===\n");
 
-    let m = Matrix::<3, 3>::new([
-        [4.0, 2.0, 1.0],
-        [2.0, 5.0, 3.0],
-        [1.0, 3.0, 6.0],
-    ]);
+    let m = Matrix::<3, 3>::new([[4.0, 2.0, 1.0], [2.0, 5.0, 3.0], [1.0, 3.0, 6.0]]);
 
     println!("Original matrix A:");
     println!("{}", m);
@@ -44,11 +40,7 @@ fn main() {
     println!("{}", "=".repeat(50));
 
     // Use a matrix where regular LU might struggle
-    let m2 = Matrix::<3, 3>::new([
-        [0.0, 1.0, 2.0],
-        [1.0, 2.0, 3.0],
-        [2.0, 3.0, 5.0],
-    ]);
+    let m2 = Matrix::<3, 3>::new([[0.0, 1.0, 2.0], [1.0, 2.0, 3.0], [2.0, 3.0, 5.0]]);
 
     println!("\nMatrix with zero pivot:");
     println!("{}", m2);
@@ -136,11 +128,7 @@ fn main() {
     println!("{}", "=".repeat(50));
 
     // Symmetric positive-definite matrix
-    let spd = Matrix::<3, 3>::new([
-        [4.0, 2.0, 2.0],
-        [2.0, 5.0, 1.0],
-        [2.0, 1.0, 6.0],
-    ]);
+    let spd = Matrix::<3, 3>::new([[4.0, 2.0, 2.0], [2.0, 5.0, 1.0], [2.0, 1.0, 6.0]]);
 
     println!("\nSymmetric positive-definite matrix:");
     println!("{}", spd);
