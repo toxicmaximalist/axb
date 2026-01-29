@@ -1,12 +1,30 @@
 [package]
 name = "axb"
-version = "0.1.4"
+version = "0.2.0"
 edition = "2021"
 authors = ["Ilia Sichinava"]
 repository = "https://github.com/Fugazzii/Axb"
-description = "Rust library for linear algebra"
+description = "A lightweight, zero-dependency linear algebra library with compile-time dimension checking"
 license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["linear-algebra", "matrix", "math", "numerical", "const-generics"]
+categories = ["mathematics", "science"]
+documentation = "https://docs.rs/axb"
+rust-version = "1.56"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "axb"
+path = "src/lib.rs"
 
 [dependencies]
+
+[dev-dependencies]
+
+[[example]]
+name = "basic_usage"
+
+[[example]]
+name = "decompositions"
+
+[badges]
+maintenance = { status = "actively-developed" }
